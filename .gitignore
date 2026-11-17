@@ -1,3 +1,8 @@
+# Local Environment & Server Overrides
+app/Config/database.local.php
+.env
+.env.local
+
 # Operating System Files
 .DS_Store
 .DS_Store?
