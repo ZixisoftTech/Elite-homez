@@ -9,9 +9,12 @@ use RuntimeException;
 
 class Database {
     private static ?PDO $instance = null;
+    private static array $resolvedConfig = [];
+    private static string $configSource = 'default';
+    private static array $scannedFilesReport = [];
 
     /**
-     * Load environment file (.env) if present in root or app/Config
+     * Load environment file (.env) if present in root, app/Config, or parent directory
      */
     private static function loadEnv(): void {
         static $envLoaded = false;
@@ -23,8 +26,10 @@ class Database {
         $root = dirname(__DIR__, 2);
         $envPaths = [
             $root . '/.env',
+            $root . '/.env.local',
             $root . '/app/Config/.env',
-            dirname(__DIR__) . '/.env'
+            dirname(__DIR__) . '/.env',
+            dirname($root) . '/.env'
         ];
 
         foreach ($envPaths as $path) {
@@ -54,35 +59,184 @@ class Database {
     }
 
     /**
-     * Resolve configuration with support for arrays, key aliases, and standalone variables
+     * Inspect and parse configuration details from a candidate PHP or env file
      */
-    private static function loadConfig(): array {
-        self::loadEnv();
+    private static function inspectConfigFile(string $filePath): ?array {
+        if (!file_exists($filePath) || !is_readable($filePath)) {
+            return null;
+        }
 
-        $configDir = dirname(__DIR__) . '/Config';
-        $localConfig = $configDir . '/database.local.php';
-        $mainConfig = $configDir . '/database.php';
-
-        $fileToLoad = file_exists($localConfig) ? $localConfig : $mainConfig;
-        
         $config = [];
-        if (file_exists($fileToLoad)) {
-            $loaded = require $fileToLoad;
+
+        // 1. Attempt PHP include / require
+        try {
+            $loaded = (function(string $f) {
+                return @include $f;
+            })($filePath);
+
             if (is_array($loaded)) {
                 $config = $loaded;
             } else {
-                // If the user defined plain variables without a return statement
                 $vars = (function(string $f): array {
-                    require $f;
+                    @include $f;
                     return get_defined_vars();
-                })($fileToLoad);
+                })($filePath);
                 if (!empty($vars)) {
-                    $config = $vars;
+                    foreach (['db', 'config', 'database', 'db_config', 'dbConfig'] as $arrKey) {
+                        if (isset($vars[$arrKey]) && is_array($vars[$arrKey])) {
+                            $config = array_merge($config, $vars[$arrKey]);
+                        }
+                    }
+                    $config = array_merge($config, $vars);
                 }
+            }
+        } catch (\Throwable $e) {
+            // Require failed or file had errors
+        }
+
+        // 2. Fallback: Parse raw content with regex (catches unreturned variables, syntax variants, or mysqli)
+        $raw = @file_get_contents($filePath);
+        if ($raw !== false && $raw !== '') {
+            $extract = function(array $names) use ($raw): ?string {
+                foreach ($names as $name) {
+                    // Match array syntax: 'key' => 'value' or "key" => "value"
+                    if (preg_match('/[\'"]' . preg_quote($name, '/') . '[\'"]\s*=>\s*[\'"]([^\'"]*)[\'"]/', $raw, $m)) {
+                        return $m[1];
+                    }
+                    // Match variable syntax: $key = 'value' or $key = "value"
+                    if (preg_match('/\$' . preg_quote($name, '/') . '\s*=\s*[\'"]([^\'"]*)[\'"]/', $raw, $m)) {
+                        return $m[1];
+                    }
+                    // Match define('KEY', 'value')
+                    if (preg_match('/define\s*\(\s*[\'"]' . preg_quote($name, '/') . '[\'"]\s*,\s*[\'"]([^\'"]*)[\'"]\s*\)/i', $raw, $m)) {
+                        return $m[1];
+                    }
+                }
+                return null;
+            };
+
+            // Pattern: mysqli_connect('host', 'user', 'pass', 'db')
+            if (preg_match('/mysqli(?:_connect)?\s*\(\s*[\'"]([^\'"]*)[\'"]\s*,\s*[\'"]([^\'"]*)[\'"]\s*,\s*[\'"]([^\'"]*)[\'"]\s*,\s*[\'"]([^\'"]*)[\'"]/', $raw, $m)) {
+                if (empty($config['host'])) $config['host'] = $m[1];
+                if (empty($config['username'])) $config['username'] = $m[2];
+                if (!isset($config['password'])) $config['password'] = $m[3];
+                if (empty($config['database'])) $config['database'] = $m[4];
+            }
+
+            if (empty($config['username']) && empty($config['user'])) {
+                $val = $extract(['username', 'user', 'db_user', 'db_username', 'DB_USER', 'DB_USERNAME']);
+                if ($val !== null) $config['username'] = $val;
+            }
+            if (!isset($config['password']) && !isset($config['pass'])) {
+                $val = $extract(['password', 'pass', 'passwd', 'db_pass', 'db_password', 'DB_PASS', 'DB_PASSWORD']);
+                if ($val !== null) $config['password'] = $val;
+            }
+            if (empty($config['database']) && empty($config['dbname'])) {
+                $val = $extract(['database', 'dbname', 'db_name', 'name', 'DB_NAME', 'DB_DATABASE']);
+                if ($val !== null) $config['database'] = $val;
+            }
+            if (empty($config['host']) && empty($config['hostname'])) {
+                $val = $extract(['host', 'hostname', 'db_host', 'servername', 'DB_HOST', 'DB_SERVER']);
+                if ($val !== null) $config['host'] = $val;
             }
         }
 
-        return $config;
+        return !empty($config) ? $config : null;
+    }
+
+    /**
+     * Resolve configuration by scanning candidate locations and prioritizing production credentials
+     */
+    private static function loadConfig(): array {
+        if (!empty(self::$resolvedConfig)) {
+            return self::$resolvedConfig;
+        }
+
+        self::loadEnv();
+
+        $root = dirname(__DIR__, 2);
+        $candidates = [
+            'app/Config/database.local.php' => $root . '/app/Config/database.local.php',
+            'app/config/database.local.php' => $root . '/app/config/database.local.php',
+            'database.local.php'            => $root . '/database.local.php',
+            'database.php'                  => $root . '/database.php',
+            'config/database.php'           => $root . '/config/database.php',
+            'config/database.local.php'     => $root . '/config/database.local.php',
+            'db.php'                        => $root . '/db.php',
+            'app/database.php'              => $root . '/app/database.php',
+            'app/Config/database.php'       => $root . '/app/Config/database.php',
+            'app/config/database.php'       => $root . '/app/config/database.php',
+        ];
+
+        $bestCandidate = null;
+        $highestScore = -1;
+        $bestLabel = 'app/Config/database.php';
+
+        foreach ($candidates as $label => $path) {
+            if (!file_exists($path)) {
+                self::$scannedFilesReport[$label] = 'not found';
+                continue;
+            }
+
+            $cfg = self::inspectConfigFile($path);
+            if ($cfg === null) {
+                self::$scannedFilesReport[$label] = 'found but unparseable';
+                continue;
+            }
+
+            $user = (string)($cfg['username'] ?? $cfg['user'] ?? $cfg['db_user'] ?? $cfg['db_username'] ?? '');
+            $pass = (string)($cfg['password'] ?? $cfg['pass'] ?? $cfg['passwd'] ?? $cfg['db_pass'] ?? $cfg['db_password'] ?? '');
+            $db   = (string)($cfg['database'] ?? $cfg['dbname'] ?? $cfg['db_name'] ?? '');
+            $hasPass = ($pass !== '');
+
+            self::$scannedFilesReport[$label] = sprintf(
+                'exists (user=%s, pass=%s, db=%s)',
+                $user !== '' ? "'$user'" : 'unset',
+                $hasPass ? 'YES' : 'NO',
+                $db !== '' ? "'$db'" : 'unset'
+            );
+
+            // Scoring system:
+            // Non-root username: +100
+            // Non-empty password: +50
+            // database.local.php file: +30
+            // Custom db name: +10
+            $score = 0;
+            if ($user !== '' && $user !== 'root') {
+                $score += 100;
+            }
+            if ($hasPass) {
+                $score += 50;
+            }
+            if (str_contains($label, 'database.local.php')) {
+                $score += 30;
+            }
+            if ($db !== '' && $db !== 'elite_homez') {
+                $score += 10;
+            }
+
+            if ($score > $highestScore) {
+                $highestScore = $score;
+                $bestCandidate = $cfg;
+                $bestLabel = $label;
+            }
+        }
+
+        // If no candidate scored above default, fall back to app/Config/database.php
+        if ($bestCandidate === null) {
+            $defaultPath = $root . '/app/Config/database.php';
+            if (file_exists($defaultPath)) {
+                $bestCandidate = self::inspectConfigFile($defaultPath) ?? [];
+                $bestLabel = 'app/Config/database.php';
+            } else {
+                $bestCandidate = [];
+                $bestLabel = 'environment fallback';
+            }
+        }
+
+        self::$configSource = $bestLabel;
+        self::$resolvedConfig = $bestCandidate;
+        return self::$resolvedConfig;
     }
 
     public static function getConnection(): PDO {
@@ -117,13 +271,23 @@ class Database {
                 PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
             ];
 
-            // Host fallback order: try configured host, then alternate socket/TCP host
-            $hostsToTry = [$host];
-            if ($host === '127.0.0.1') {
-                $hostsToTry[] = 'localhost';
-            } elseif ($host === 'localhost') {
-                $hostsToTry[] = '127.0.0.1';
+            // Host fallback: on Linux/Hostinger, localhost uses UNIX socket.
+            $isLinux = (PHP_OS_FAMILY === 'Linux');
+            $hostsToTry = [];
+            if ($isLinux) {
+                if ($host === 'localhost' || $host === '127.0.0.1') {
+                    $hostsToTry = ['localhost', '127.0.0.1'];
+                } else {
+                    $hostsToTry = [$host, 'localhost', '127.0.0.1'];
+                }
+            } else {
+                if ($host === '127.0.0.1' || $host === 'localhost') {
+                    $hostsToTry = ['127.0.0.1', 'localhost'];
+                } else {
+                    $hostsToTry = [$host, '127.0.0.1', 'localhost'];
+                }
             }
+            $hostsToTry = array_values(array_unique($hostsToTry));
 
             $lastException = null;
             foreach ($hostsToTry as $currentHost) {
@@ -140,13 +304,27 @@ class Database {
                     return self::$instance;
                 } catch (PDOException $e) {
                     $lastException = $e;
-                    // Attempt next host (e.g. localhost fallback on Hostinger/cPanel Linux socket)
                 }
             }
 
-            // If all host attempts failed
-            error_log('[Database Connection Error] ' . ($lastException ? $lastException->getMessage() : 'Unknown connection error'));
-            throw new RuntimeException('Database connection failed: ' . ($lastException ? $lastException->getMessage() : 'Unknown error') . '. Please verify database credentials in app/Config/database.php.');
+            // Connection failed: assemble detailed diagnostic summary
+            $scanSummary = [];
+            foreach (self::$scannedFilesReport as $f => $st) {
+                $scanSummary[] = "$f: $st";
+            }
+
+            $diagMsg = sprintf(
+                "Database connection failed: %s | Active Config Source: %s | User: '%s' | DB: '%s' | Password Provided: %s | Scanned files: [%s]",
+                ($lastException ? $lastException->getMessage() : 'Unknown error'),
+                self::$configSource,
+                $username,
+                $database,
+                ($password !== '' ? 'YES (length ' . strlen((string)$password) . ')' : 'NO (empty)'),
+                implode(', ', $scanSummary)
+            );
+
+            error_log('[Database Connection Error] ' . $diagMsg);
+            throw new RuntimeException($diagMsg);
         }
 
         return self::$instance;
