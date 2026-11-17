@@ -99,8 +99,18 @@ class Database {
         $rawPasswordLiteral = null;
 
         if ($raw !== false && $raw !== '') {
+            // Check if someone passed literal password inside getenv('MyPassword')
+            if (preg_match_all("/getenv\s*\(\s*['\"]([^'\"]+)['\"]\s*\)/i", $raw, $gm)) {
+                foreach ($gm[1] as $arg) {
+                    if (!in_array($arg, ['DB_PASS', 'DB_PASSWORD', 'DB_USER', 'DB_NAME', 'DB_HOST', 'DB_PORT', 'HTTP_HOST', 'HTTPS'])) {
+                        $rawPasswordLiteral = $arg;
+                        break;
+                    }
+                }
+            }
+
             // Pattern A: ternary getenv fallback: getenv(...) : 'password' or getenv(...) ?: 'password'
-            if (preg_match('/(?:password|pass|passwd|db_pass)[^\r\n;]*:[^\r\n;]*[\'"]([^\r\n\'"]+)[\'"]/i', $raw, $pm)) {
+            if ($rawPasswordLiteral === null && preg_match('/(?:password|pass|passwd|db_pass)[^\r\n;]*:[^\r\n;]*[\'"]([^\r\n\'"]+)[\'"]/i', $raw, $pm)) {
                 if (!empty($pm[1]) && !str_contains($pm[1], 'getenv')) {
                     $rawPasswordLiteral = $pm[1];
                 }
@@ -300,6 +310,30 @@ class Database {
 
             if ($password === false || $password === null) {
                 $password = '';
+            }
+
+            // Extra fallback: if password is empty, scan candidate files for literal password inside getenv('MyPass')
+            if ($password === '') {
+                $root = dirname(__DIR__, 2);
+                $candidateFiles = [
+                    $root . '/app/Config/database.local.php',
+                    $root . '/database.local.php',
+                    $root . '/app/Config/database.php',
+                    $root . '/database.php'
+                ];
+                foreach ($candidateFiles as $f) {
+                    if (file_exists($f)) {
+                        $raw = @file_get_contents($f);
+                        if ($raw && preg_match_all("/getenv\s*\(\s*['\"]([^'\"]+)['\"]\s*\)/i", $raw, $gm)) {
+                            foreach ($gm[1] as $arg) {
+                                if (!in_array($arg, ['DB_PASS', 'DB_PASSWORD', 'DB_USER', 'DB_NAME', 'DB_HOST', 'DB_PORT', 'HTTP_HOST', 'HTTPS'])) {
+                                    $password = $arg;
+                                    break 2;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             $charset = $config['charset'] ?? 'utf8mb4';
