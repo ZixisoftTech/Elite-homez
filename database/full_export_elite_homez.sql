@@ -537,6 +537,10 @@ LOCK TABLES `testimonials` WRITE;
 INSERT INTO `testimonials` VALUES (1,'R.K. Mehta','Home Buyer, Vasant Vihar','Elite Homez made the entire process seamless and professional. Their market knowledge and attention to detail are truly impressive.',5,NULL,1,1,'2026-09-12 12:09:52','2026-09-12 13:01:29'),(2,'Priya S.','Tenant, Jor Bagh','A trustworthy and knowledgeable team who genuinely understand client needs. Highly recommended for anyone looking to buy or rent premium properties.',5,NULL,1,2,'2026-09-12 12:09:52','2026-09-12 13:01:29'),(4,'Chetan P','Employer','Hello test this is for test',5,NULL,1,0,'2026-09-29 16:35:27','2026-09-29 16:35:38'),(5,'QA Test Client HNI','Managing Director, Sovereign Capital','Elite Homez provided exemplary discreet advisory during our luxury bungalow acquisition in Jor Bagh.',5,'/uploads/testimonials/d6724ec4e714bda661eff209d63f7d69.jpg',1,1,'2026-09-30 18:04:12','2026-09-30 18:04:12');
 /*!40000 ALTER TABLE `testimonials` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Dumping routines for database 'elite_homez'
+--
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -547,4 +551,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-17 12:01:38
+-- Dump completed on 2026-11-17 13:02:49
