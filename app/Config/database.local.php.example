@@ -1,0 +1,22 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Server-Specific Database Configuration Override
+ * Rename or copy this file to: app/Config/database.local.php on your live server
+ */
+
+return [
+    'host' => 'localhost',              // Hostinger/cPanel MySQL host (usually 'localhost')
+    'port' => 3306,
+    'database' => 'u805789376_elite',   // Replace with your actual live database name
+    'username' => 'u805789376_user',    // Replace with your actual live database username
+    'password' => 'YourStrongPassword', // Replace with your actual live database password
+    'charset' => 'utf8mb4',
+    'options' => [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+    ]
+];

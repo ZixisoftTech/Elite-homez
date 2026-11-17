@@ -1,0 +1,916 @@
+<?php
+use App\Helpers\Csrf;
+use App\Helpers\Format;
+use App\Helpers\SvgIcons;
+
+$config = require dirname(__DIR__, 3) . '/Config/config.php';
+$baseUrl = $config['base_url'];
+
+// Starter defaults for smooth creation
+$defaultStats = [
+    ['value' => '100%', 'label' => 'Client Alignment'],
+    ['value' => '25+ Yrs', 'label' => 'Enclave Mastery'],
+    ['value' => '0%', 'label' => 'Broker Conflicts']
+];
+
+$defaultDeliverables = [
+    ['num' => '01', 'title' => 'Confidential Briefing', 'tag' => 'Discovery', 'desc' => 'Structured intake sessions to codify architectural criteria, statutory parameters, and private family office governance.'],
+    ['num' => '02', 'title' => 'Curated Selection', 'tag' => 'Off-Market', 'desc' => 'Direct off-market sweeps across private trusts and vetted landholders with zero portal exposure.'],
+    ['num' => '03', 'title' => 'Due Diligence & Title', 'tag' => 'Legal Audit', 'desc' => 'Forensic 30-year title checks, encumbrance audits, structural engineering reviews, and municipal sanction vetting.'],
+    ['num' => '04', 'title' => 'Fiduciary Negotiation', 'tag' => 'Transaction', 'desc' => 'Senior Partner advocacy to enforce fair valuation metrics and absolute commercial confidentiality.'],
+    ['num' => '05', 'title' => 'Settlement & Handover', 'tag' => 'Closing', 'desc' => 'End-to-end conveyance deed registration, municipal property tax mutations, and physical key handover concierge.']
+];
+
+$defaultRoadmap = [
+    ['step' => '01', 'title' => 'Discovery', 'desc' => 'Defining spatial parameters, enclave boundaries, and capital timelines.'],
+    ['step' => '02', 'title' => 'Curation', 'desc' => 'Unlocking private off-market inventory and family office holdings.'],
+    ['step' => '03', 'title' => 'Shortlist', 'desc' => 'Private, escorted walkthroughs arranged around your schedule.'],
+    ['step' => '04', 'title' => 'Diligence', 'desc' => 'Forensic 30-year title checks, encumbrance verification, and zoning permits.'],
+    ['step' => '05', 'title' => 'Negotiation', 'desc' => 'Discreet fiduciary bargaining to secure optimal terms and asset pricing.'],
+    ['step' => '06', 'title' => 'Handover', 'desc' => 'Conveyance deed registry, municipal transfer, and post-possession onboarding.']
+];
+
+$defaultWhy = [
+    ['num' => '01', 'icon' => 'history_edu', 'title' => '20+ Years in Prime Enclaves', 'desc' => 'Decades spent cultivating intimate relationships with South Delhi landholders and private trusts.'],
+    ['num' => '02', 'icon' => 'visibility_off', 'title' => '100% Off-Market Access', 'desc' => 'Transactions conducted purely through private networks and legacy mandates.'],
+    ['num' => '03', 'icon' => 'location_on', 'title' => 'Micro-Market Mastery', 'desc' => 'Granular familiarity with plot dimensions, road widths, FAR regulations, and zoning covenants.'],
+    ['num' => '04', 'icon' => 'person', 'title' => 'Partner-Level Fiduciary', 'desc' => 'A Senior Partner directly stewards every negotiation, review, and property tour.'],
+    ['num' => '05', 'icon' => 'lock', 'title' => 'Strict Non-Disclosure', 'desc' => 'Absolute privacy protocols protected under bilateral NDA covenants.'],
+    ['num' => '06', 'icon' => 'verified_user', 'title' => 'RERA & Title Verification', 'desc' => 'Complete statutory compliance under DLRERA2023A00892 with forensic title vetting.']
+];
+
+$defaultAudiences = [
+    ['icon' => 'home', 'title' => 'Private Home Buyers', 'desc' => 'Families seeking an enduring primary residence, generational builder floor, or standalone bungalow.'],
+    ['icon' => 'account_balance', 'title' => 'Family Offices', 'desc' => 'Capital stewards seeking resilient, defensive trophy assets with strong rental yields and capital preservation.'],
+    ['icon' => 'public', 'title' => 'Global Indians & NRIs', 'desc' => 'Non-resident leaders requiring trusted, on-ground proxy representation with complete legal transparency.'],
+    ['icon' => 'trending_up', 'title' => 'Upgrading Residents', 'desc' => 'Homeowners seeking superior architectural scale, modern acoustic shielding, and multi-vehicle parking.']
+];
+
+$defaultFaqs = [
+    [
+        'question' => 'How does this private advisory mandate operate?',
+        'answer' => 'We operate under an exclusive client representation mandate, conducting structured market sweeps, comprehensive due diligence, and negotiation under strict bilateral non-disclosure.'
+    ],
+    [
+        'question' => 'Are client communications and identities protected?',
+        'answer' => 'Yes. All consultations and mandates are strictly protected by bilateral non-disclosure agreements. We never disclose client identities or financial parameters.'
+    ],
+    [
+        'question' => 'What are the commercial terms and fees?',
+        'answer' => 'Our fee structure is completely transparent, success-contingent, and governed by bilateral advisory agreements without hidden markups.'
+    ]
+];
+?>
+
+<form action="<?= $baseUrl ?>/admin/services/store" method="POST" enctype="multipart/form-data">
+    <?= Csrf::field() ?>
+
+    <div class="admin-page-header">
+        <div>
+            <h2 style="font-size: 1.35rem; font-weight: 600; color: var(--admin-navy); margin: 0 0 0.25rem 0;">Add Advisory Service</h2>
+            <p style="font-size: 0.85rem; color: var(--admin-text-muted); margin: 0;">Create a new real estate advisory discipline with complete frontend sections and dynamic controls.</p>
+        </div>
+        <div class="admin-header-actions">
+            <a href="<?= $baseUrl ?>/admin/services" class="btn btn-outline btn-sm">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-sm">Save &amp; Publish Service</button>
+        </div>
+    </div>
+
+    <div class="admin-form-layout">
+        <!-- Left Main Column: Section Tabs -->
+        <div class="admin-form-main">
+            <!-- Navigation Tabs -->
+            <div class="admin-tabs" style="display: flex; flex-wrap: wrap; gap: 0.25rem; border-bottom: 1px solid var(--admin-border); margin-bottom: 1.25rem;">
+                <button type="button" class="admin-tab-btn active" data-tab="tab-overview">1. Hero &amp; Core</button>
+                <button type="button" class="admin-tab-btn" data-tab="tab-approach">2. The Approach</button>
+                <button type="button" class="admin-tab-btn" data-tab="tab-deliverables">3. What We Do</button>
+                <button type="button" class="admin-tab-btn" data-tab="tab-roadmap">4. Journey Roadmap</button>
+                <button type="button" class="admin-tab-btn" data-tab="tab-banner">5. Quotes &amp; Why Us</button>
+                <button type="button" class="admin-tab-btn" data-tab="tab-valueprop">6. Value &amp; Audiences</button>
+                <button type="button" class="admin-tab-btn" data-tab="tab-faqs">7. FAQs (Accordion)</button>
+                <button type="button" class="admin-tab-btn" data-tab="tab-cta">8. Enquiry &amp; CTA</button>
+            </div>
+
+            <!-- TAB 1: HERO & CORE OVERVIEW -->
+            <div class="admin-tab-pane active" id="tab-overview">
+                <div class="admin-card">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--admin-navy);">Section 1: Hero Identity, Headlines &amp; Actions</h3>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="name">Service Name / Title *</label>
+                            <input type="text" name="name" id="name" class="form-control" placeholder="e.g. Commercial Real Estate Mandate" required>
+                            <small class="form-text">Split automatically across editorial serif lines on the live page.</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="slug">URL Slug (Optional Custom Permalinks)</label>
+                            <input type="text" name="slug" id="slug" class="form-control" placeholder="Leave blank to auto-generate from title">
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="hero_badge">Practice Mandate Badge / Overline</label>
+                            <input type="text" name="hero_badge" id="hero_badge" class="form-control" placeholder="e.g. Practice Mandate 05 · Corporate Client Advisory">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="hero_tagline">Hero Header Micro-Tagline</label>
+                            <input type="text" name="hero_tagline" id="hero_tagline" class="form-control" value="ELITE HOMEZ · PRIVATE REAL ESTATE ADVISORY" placeholder="e.g. ELITE HOMEZ · PRIVATE REAL ESTATE ADVISORY">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="short_description">Executive Summary / Hero Lead Paragraph *</label>
+                        <textarea name="short_description" id="short_description" class="form-control" rows="3" placeholder="Lead editorial paragraph displayed on hero and homepage cards..." required></textarea>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="hero_cta_text">Primary Button Text</label>
+                            <input type="text" name="hero_cta_text" id="hero_cta_text" class="form-control" value="Speak with an Advisor" placeholder="e.g. Speak with an Advisor">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="hero_cta_url">Primary Button URL / Target</label>
+                            <input type="text" name="hero_cta_url" id="hero_cta_url" class="form-control" value="#confidential-desk" placeholder="e.g. #confidential-desk">
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="hero_fiduciary_title">Fiduciary Floating Card Title</label>
+                            <input type="text" name="hero_fiduciary_title" id="hero_fiduciary_title" class="form-control" value="Exclusive Client Representation" placeholder="e.g. Exclusive Client Representation">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="hero_fiduciary_badge">Floating Card Badge</label>
+                            <input type="text" name="hero_fiduciary_badge" id="hero_fiduciary_badge" class="form-control" value="Zero Conflict · 100% Aligned" placeholder="e.g. Zero Conflict">
+                        </div>
+                    </div>
+
+                    <!-- Hero Feature Bullets -->
+                    <div class="form-group">
+                        <label class="form-label">Hero Highlight Badges (Under Action Buttons)</label>
+                        <div id="hero-features-container" class="space-y-2">
+                            <div class="dynamic-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" name="hero_features[]" class="form-control" value="South Delhi Enclaves" placeholder="e.g. South Delhi Enclaves">
+                                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                            </div>
+                            <div class="dynamic-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" name="hero_features[]" class="form-control" value="Zero Conflict of Interest" placeholder="e.g. Zero Conflict of Interest">
+                                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                            </div>
+                            <div class="dynamic-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" name="hero_features[]" class="form-control" value="RERA Certified" placeholder="e.g. RERA Certified">
+                                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                            </div>
+                        </div>
+                        <button type="button" id="add-hero-feature-btn" class="btn btn-outline btn-sm" style="margin-top: 0.5rem;">+ Add Highlight Badge</button>
+                    </div>
+
+                    <!-- Primary Hero Image -->
+                    <div class="form-group" style="padding-top: 1rem; border-top: 1px solid var(--admin-border);">
+                        <label class="form-label">Hero Architectural Portrait Image</label>
+                        <div class="grid-2">
+                            <div>
+                                <label class="form-label" for="image">Upload Image File</label>
+                                <input type="file" name="image" id="image" class="form-control" accept="image/jpeg,image/png,image/webp">
+                            </div>
+                            <div>
+                                <label class="form-label" for="image_path">Or Direct Image Path / URL</label>
+                                <input type="text" name="image_path" id="image_path" class="form-control" value="/assets/images/services/residential-advisory.jpg" placeholder="/assets/images/...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: THE APPROACH & STATS -->
+            <div class="admin-tab-pane" id="tab-approach">
+                <div class="admin-card">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--admin-navy);">Section 2: The Elite Homez Approach</h3>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="approach_eyebrow">Section Eyebrow</label>
+                            <input type="text" name="approach_eyebrow" id="approach_eyebrow" class="form-control" value="The Elite Homez Approach">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="approach_title">Main Headline</label>
+                            <input type="text" name="approach_title" id="approach_title" class="form-control" value="Property decisions deserve a more personal, discreet approach.">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="approach_description">Philosophy &amp; Strategic Value Proposition</label>
+                        <textarea name="approach_description" id="approach_description" class="form-control" rows="6" placeholder="Paragraphs explaining the philosophy and fiduciary positioning for this service...">In the rarefied landscape of Delhi NCR’s trophy real estate, the finest opportunities are rarely advertised on open portals. They trade in quiet confidence between established generational families and vetted private offices.
+
+Elite Homez operates exclusively on the client side of the transaction. We act not as conventional transactional brokers, but as personal property fiduciaries examining legal title, spatial viability, structural integrity, and long-term liquidity.</textarea>
+                    </div>
+
+                    <!-- Approach Stats Repeater -->
+                    <div class="form-group">
+                        <label class="form-label">Key Authority Metrics / Stat Badges</label>
+                        <div id="approach-stats-container">
+                            <?php foreach ($defaultStats as $sIdx => $st): ?>
+                                <div class="dynamic-row" style="display: grid; grid-template-columns: 140px 1fr 40px; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <input type="text" name="approach_stats[<?= $sIdx ?>][value]" class="form-control" value="<?= Format::e($st['value']) ?>" placeholder="e.g. 100%">
+                                    <input type="text" name="approach_stats[<?= $sIdx ?>][label]" class="form-control" value="<?= Format::e($st['label']) ?>" placeholder="e.g. Buyer Aligned">
+                                    <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <button type="button" id="add-stat-btn" class="btn btn-outline btn-sm" style="margin-top: 0.5rem;">+ Add Stat Badge</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: WHAT WE DO (DELIVERABLES) -->
+            <div class="admin-tab-pane" id="tab-deliverables">
+                <div class="admin-card">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--admin-navy);">Section 3: What We Do (Systematic Due Diligence)</h3>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="deliverables_eyebrow">Section Eyebrow</label>
+                            <input type="text" name="deliverables_eyebrow" id="deliverables_eyebrow" class="form-control" value="Systematic Due Diligence">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="deliverables_title">Headline</label>
+                            <input type="text" name="deliverables_title" id="deliverables_title" class="form-control" value="What We Deliver">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="deliverables_subtitle">Subtitle / Overview Description</label>
+                        <input type="text" name="deliverables_subtitle" id="deliverables_subtitle" class="form-control" value="A rigorous, institutional methodology tailored specifically to high-value real estate engagements.">
+                    </div>
+
+                    <!-- Deliverables Repeater -->
+                    <div class="form-group">
+                        <label class="form-label">Deliverables / Methodology Steps</label>
+                        <div id="deliverables-container">
+                            <?php foreach ($defaultDeliverables as $dIdx => $dItem): ?>
+                                <div class="dynamic-row" style="background: #FAF8F4; padding: 1rem; border: 1px solid var(--admin-border); border-radius: 4px; margin-bottom: 0.75rem;">
+                                    <div style="display: grid; grid-template-columns: 80px 1fr 1fr 40px; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <input type="text" name="deliverables_items[<?= $dIdx ?>][num]" class="form-control" value="<?= Format::e($dItem['num']) ?>" placeholder="01">
+                                        <input type="text" name="deliverables_items[<?= $dIdx ?>][title]" class="form-control" value="<?= Format::e($dItem['title']) ?>" placeholder="Step Title">
+                                        <input type="text" name="deliverables_items[<?= $dIdx ?>][tag]" class="form-control" value="<?= Format::e($dItem['tag']) ?>" placeholder="Tag / Category">
+                                        <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                                    </div>
+                                    <textarea name="deliverables_items[<?= $dIdx ?>][desc]" class="form-control" rows="2" placeholder="Detailed step description..."><?= Format::e($dItem['desc']) ?></textarea>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <button type="button" id="add-deliverable-btn" class="btn btn-outline btn-sm" style="margin-top: 0.5rem;">+ Add Methodology Step</button>
+                    </div>
+
+                    <div class="form-group" style="padding-top: 1rem; border-top: 1px solid var(--admin-border);">
+                        <label class="form-label" for="content">Executive Practice Briefing Box (Optional Rich Content)</label>
+                        <textarea name="content" id="content" class="form-control" rows="6" placeholder="Additional background description displayed in executive briefing box..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: JOURNEY ROADMAP -->
+            <div class="admin-tab-pane" id="tab-roadmap">
+                <div class="admin-card">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--admin-navy);">Section 4: Acquisition &amp; Mandate Journey Roadmap</h3>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="roadmap_eyebrow">Roadmap Eyebrow</label>
+                            <input type="text" name="roadmap_eyebrow" id="roadmap_eyebrow" class="form-control" value="Client Roadmap">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="roadmap_title">Roadmap Title</label>
+                            <input type="text" name="roadmap_title" id="roadmap_title" class="form-control" value="From Mandate to Complete Settlement">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="roadmap_subtitle">Roadmap Subtitle</label>
+                        <input type="text" name="roadmap_subtitle" id="roadmap_subtitle" class="form-control" value="A structured journey engineered for absolute peace of mind and decisive execution.">
+                    </div>
+
+                    <!-- Roadmap Repeater -->
+                    <div class="form-group">
+                        <label class="form-label">Roadmap Milestone Stages</label>
+                        <div id="roadmap-container">
+                            <?php foreach ($defaultRoadmap as $rIdx => $rStep): ?>
+                                <div class="dynamic-row" style="background: #FAF8F4; padding: 1rem; border: 1px solid var(--admin-border); border-radius: 4px; margin-bottom: 0.75rem;">
+                                    <div style="display: grid; grid-template-columns: 80px 1fr 40px; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <input type="text" name="roadmap_steps[<?= $rIdx ?>][step]" class="form-control" value="<?= Format::e($rStep['step']) ?>" placeholder="01">
+                                        <input type="text" name="roadmap_steps[<?= $rIdx ?>][title]" class="form-control" value="<?= Format::e($rStep['title']) ?>" placeholder="Stage Name">
+                                        <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                                    </div>
+                                    <textarea name="roadmap_steps[<?= $rIdx ?>][desc]" class="form-control" rows="2" placeholder="Stage description..."><?= Format::e($rStep['desc']) ?></textarea>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <button type="button" id="add-roadmap-btn" class="btn btn-outline btn-sm" style="margin-top: 0.5rem;">+ Add Roadmap Stage</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: QUOTES & WHY US -->
+            <div class="admin-tab-pane" id="tab-banner">
+                <div class="admin-card">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--admin-navy);">Section 5: Architectural Quote &amp; Why Elite Homez</h3>
+
+                    <h4 style="font-size: 0.95rem; color: var(--admin-gold); margin-bottom: 0.75rem;">A. Parallax Architectural Quote Banner</h4>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="banner_tag">Quote Eyebrow Tag</label>
+                            <input type="text" name="banner_tag" id="banner_tag" class="form-control" value="Perspective · Discernment · Heritage">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="banner_btn_text">Banner Button Text</label>
+                            <input type="text" name="banner_btn_text" id="banner_btn_text" class="form-control" value="Request A Private Briefing">
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="banner_btn_url">Banner Button Target URL</label>
+                            <input type="text" name="banner_btn_url" id="banner_btn_url" class="form-control" value="#confidential-desk">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="banner_image_url">Banner Background Image URL</label>
+                            <input type="text" name="banner_image_url" id="banner_image_url" class="form-control" value="/assets/images/stitch/service-living-pause.jpg" placeholder="/assets/images/...">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="banner_image">Or Upload Banner Image</label>
+                        <input type="file" name="banner_image" id="banner_image" class="form-control" accept="image/*">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="banner_quote">Large Editorial Quote *</label>
+                        <input type="text" name="banner_quote" id="banner_quote" class="form-control" value="“Access matters. Judgement matters more.”">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="banner_subquote">Subquote / Guiding Principle</label>
+                        <textarea name="banner_subquote" id="banner_subquote" class="form-control" rows="2">Our role is not simply to show you property. It is to help you make an enduring, generational decision anchored in long-term value.</textarea>
+                    </div>
+
+                    <h4 style="font-size: 0.95rem; color: var(--admin-gold); margin: 1.5rem 0 0.75rem;">B. Why Elite Homez Institutional Authority</h4>
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label class="form-label" for="why_eyebrow">Section Eyebrow</label>
+                            <input type="text" name="why_eyebrow" id="why_eyebrow" class="form-control" value="Fiduciary Excellence">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="why_title">Title</label>
+                            <input type="text" name="why_title" id="why_title" class="form-control" value="Why Elite Homez">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="why_subtitle">Subtitle</label>
+                            <input type="text" name="why_subtitle" id="why_subtitle" class="form-control" value="Experience, absolute discretion, and a deeper understanding of exceptional Delhi real estate.">
+                        </div>
+                    </div>
+
+                    <!-- Why Pillars Repeater -->
+                    <div class="form-group">
+                        <label class="form-label">Authority Pillars Grid</label>
+                        <div id="why-pillars-container">
+                            <?php foreach ($defaultWhy as $wIdx => $wPillar): ?>
+                                <div class="dynamic-row" style="background: #FAF8F4; padding: 1rem; border: 1px solid var(--admin-border); border-radius: 4px; margin-bottom: 0.75rem;">
+                                    <div style="display: grid; grid-template-columns: 80px 140px 1fr 40px; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <input type="text" name="why_pillars[<?= $wIdx ?>][num]" class="form-control" value="<?= Format::e($wPillar['num']) ?>" placeholder="01">
+                                        <input type="text" name="why_pillars[<?= $wIdx ?>][icon]" class="form-control" value="<?= Format::e($wPillar['icon']) ?>" placeholder="Material Icon">
+                                        <input type="text" name="why_pillars[<?= $wIdx ?>][title]" class="form-control" value="<?= Format::e($wPillar['title']) ?>" placeholder="Pillar Title">
+                                        <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                                    </div>
+                                    <textarea name="why_pillars[<?= $wIdx ?>][desc]" class="form-control" rows="2" placeholder="Pillar description..."><?= Format::e($wPillar['desc']) ?></textarea>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <button type="button" id="add-why-pillar-btn" class="btn btn-outline btn-sm" style="margin-top: 0.5rem;">+ Add Authority Pillar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: VALUE & AUDIENCES -->
+            <div class="admin-tab-pane" id="tab-valueprop">
+                <div class="admin-card">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--admin-navy);">Section 6: Value Proposition &amp; Tailored Audiences</h3>
+
+                    <h4 style="font-size: 0.95rem; color: var(--admin-gold); margin-bottom: 0.75rem;">A. Value Proposition &amp; Showcase Case Study</h4>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="value_prop_eyebrow">Eyebrow</label>
+                            <input type="text" name="value_prop_eyebrow" id="value_prop_eyebrow" class="form-control" value="Beyond Brokering">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="value_prop_title">Title</label>
+                            <input type="text" name="value_prop_title" id="value_prop_title" class="form-control" value="More than a property transaction. An enduring generational asset.">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="value_prop_body">Value Proposition Detailed Body</label>
+                        <textarea name="value_prop_body" id="value_prop_body" class="form-control" rows="4">Traditional real estate firms are structured to favor transaction velocity and seller mandates. Elite Homez was conceived on the exact opposite principle: uncompromising client advocacy.
+
+We identify hidden boundary disputes, evaluate future infrastructure noise, scrutinize heritage zoning restrictions, and coordinate directly with your private tax and family office advisors before drafting purchase agreements.</textarea>
+                    </div>
+
+                    <!-- Value Prop Checkmarks -->
+                    <div class="form-group">
+                        <label class="form-label">Key Commitments (Checkmark Bullets)</label>
+                        <div id="checkmarks-container">
+                            <div class="dynamic-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" name="value_prop_checkmarks[]" class="form-control" value="Independent Valuations" placeholder="e.g. Independent Valuations">
+                                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                            </div>
+                            <div class="dynamic-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" name="value_prop_checkmarks[]" class="form-control" value="Discreet Viewings" placeholder="e.g. Discreet Viewings">
+                                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                            </div>
+                            <div class="dynamic-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" name="value_prop_checkmarks[]" class="form-control" value="Legal Conveyance Oversight" placeholder="e.g. Legal Conveyance Oversight">
+                                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                            </div>
+                            <div class="dynamic-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" name="value_prop_checkmarks[]" class="form-control" value="Post-Purchase Onboarding" placeholder="e.g. Post-Purchase Onboarding">
+                                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                            </div>
+                        </div>
+                        <button type="button" id="add-checkmark-btn" class="btn btn-outline btn-sm" style="margin-top: 0.5rem;">+ Add Commitment Bullet</button>
+                    </div>
+
+                    <!-- Showcase Image -->
+                    <div class="grid-2" style="padding-top: 1rem; border-top: 1px solid var(--admin-border);">
+                        <div class="form-group">
+                            <label class="form-label" for="showcase_caption">Showcase Image Caption</label>
+                            <input type="text" name="showcase_caption" id="showcase_caption" class="form-control" value="Private Residence · Vasant Vihar">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="showcase_tag">Showcase Tag / Badge</label>
+                            <input type="text" name="showcase_tag" id="showcase_tag" class="form-control" value="Curated Acquisition">
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="showcase_image">Upload Showcase Image</label>
+                            <input type="file" name="showcase_image" id="showcase_image" class="form-control" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="showcase_image_url">Or Direct Showcase Image URL</label>
+                            <input type="text" name="showcase_image_url" id="showcase_image_url" class="form-control" value="/assets/images/stitch/service-master-suite.jpg" placeholder="/assets/images/...">
+                        </div>
+                    </div>
+
+                    <h4 style="font-size: 0.95rem; color: var(--admin-gold); margin: 1.5rem 0 0.75rem;">B. Tailored Client Desks (Who We Help)</h4>
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label class="form-label" for="audience_eyebrow">Eyebrow</label>
+                            <input type="text" name="audience_eyebrow" id="audience_eyebrow" class="form-control" value="Tailored Client Desks">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="audience_title">Title</label>
+                            <input type="text" name="audience_title" id="audience_title" class="form-control" value="Who We Help">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="audience_subtitle">Subtitle</label>
+                            <input type="text" name="audience_subtitle" id="audience_subtitle" class="form-control" value="Our advisory practice is crafted specifically for discerning purchasers with distinct governance criteria.">
+                        </div>
+                    </div>
+
+                    <!-- Audiences Repeater -->
+                    <div class="form-group">
+                        <label class="form-label">Audience Profiles Grid</label>
+                        <div id="audiences-container">
+                            <?php foreach ($defaultAudiences as $aIdx => $aProf): ?>
+                                <div class="dynamic-row" style="background: #FAF8F4; padding: 1rem; border: 1px solid var(--admin-border); border-radius: 4px; margin-bottom: 0.75rem;">
+                                    <div style="display: grid; grid-template-columns: 140px 1fr 40px; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <input type="text" name="audience_profiles[<?= $aIdx ?>][icon]" class="form-control" value="<?= Format::e($aProf['icon']) ?>" placeholder="e.g. home, account_balance">
+                                        <input type="text" name="audience_profiles[<?= $aIdx ?>][title]" class="form-control" value="<?= Format::e($aProf['title']) ?>" placeholder="e.g. Private Home Buyers">
+                                        <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                                    </div>
+                                    <textarea name="audience_profiles[<?= $aIdx ?>][desc]" class="form-control" rows="2" placeholder="Audience profile description..."><?= Format::e($aProf['desc']) ?></textarea>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <button type="button" id="add-audience-btn" class="btn btn-outline btn-sm" style="margin-top: 0.5rem;">+ Add Audience Profile</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: FREQUENTLY ASKED QUESTIONS (FAQS) -->
+            <div class="admin-tab-pane" id="tab-faqs">
+                <div class="admin-card">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--admin-navy);">Section 7: Frequently Asked Questions (Interactive Accordion)</h3>
+                    <p style="font-size: 0.85rem; color: var(--admin-text-muted); margin-bottom: 1.25rem;">Add, edit, and reorder service-specific FAQs that render as an interactive luxury accordion on the public page.</p>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="faqs_eyebrow">FAQ Eyebrow</label>
+                            <input type="text" name="faqs_eyebrow" id="faqs_eyebrow" class="form-control" value="Bespoke Guidance &amp; Clarity" placeholder="e.g. Bespoke Guidance &amp; Clarity">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="faqs_title">FAQ Section Title</label>
+                            <input type="text" name="faqs_title" id="faqs_title" class="form-control" value="Frequently Asked Questions" placeholder="e.g. Frequently Asked Questions">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="faqs_subtitle">FAQ Subtitle / Introduction</label>
+                        <input type="text" name="faqs_subtitle" id="faqs_subtitle" class="form-control" value="Clear answers to the most common questions regarding our private advisory services and confidential engagement process.">
+                    </div>
+
+                    <!-- FAQs Repeater -->
+                    <div class="form-group">
+                        <label class="form-label">Questions &amp; Comprehensive Answers</label>
+                        <div id="faqs-container">
+                            <?php foreach ($defaultFaqs as $fIdx => $faq): ?>
+                                <div class="dynamic-row" style="background: #FAF8F4; padding: 1.25rem; border: 1px solid var(--admin-border); border-radius: 4px; margin-bottom: 1rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                        <strong style="color: var(--admin-navy); font-size: 0.9rem;">FAQ Item #<span class="faq-row-num"><?= $fIdx + 1 ?></span></strong>
+                                        <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">Remove FAQ &times;</button>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                                        <label class="form-label" style="font-size: 0.8rem;">Question *</label>
+                                        <input type="text" name="faqs_items[<?= $fIdx ?>][question]" class="form-control" value="<?= Format::e($faq['question']) ?>" placeholder="e.g. How does the private acquisition advisory mandate work?" required>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" style="font-size: 0.8rem;">Answer *</label>
+                                        <textarea name="faqs_items[<?= $fIdx ?>][answer]" class="form-control" rows="3" placeholder="Detailed response for clients..." required><?= Format::e($faq['answer']) ?></textarea>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <button type="button" id="add-faq-btn" class="btn btn-outline btn-sm" style="margin-top: 0.5rem;">+ Add New FAQ Item</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 8: ENQUIRY DESK & BOTTOM CTA -->
+            <div class="admin-tab-pane" id="tab-cta">
+                <div class="admin-card">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--admin-navy);">Section 8: Confidential Enquiry Desk &amp; Bottom Cinematic CTA</h3>
+
+                    <h4 style="font-size: 0.95rem; color: var(--admin-gold); margin-bottom: 0.75rem;">A. Confidential Enquiry Desk (Lead Conversion)</h4>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="enquiry_eyebrow">Enquiry Eyebrow</label>
+                            <input type="text" name="enquiry_eyebrow" id="enquiry_eyebrow" class="form-control" value="Confidential Dialogue">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="enquiry_title">Enquiry Title</label>
+                            <input type="text" name="enquiry_title" id="enquiry_title" class="form-control" value="Initiate a Private Advisory Briefing">
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="enquiry_description">Enquiry Lead Description</label>
+                            <textarea name="enquiry_description" id="enquiry_description" class="form-control" rows="3">Share your parameters. A designated Elite Homez Senior Partner will contact you under strict bilateral confidentiality.</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="enquiry_btn_text">Submit Button Text</label>
+                            <input type="text" name="enquiry_btn_text" id="enquiry_btn_text" class="form-control" value="Submit Confidential Mandate">
+                        </div>
+                    </div>
+
+                    <!-- Enquiry Features Bullets -->
+                    <div class="form-group">
+                        <label class="form-label">Trust &amp; Compliance Badges (Beside Form)</label>
+                        <div id="enquiry-features-container">
+                            <div class="dynamic-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" name="enquiry_features[]" class="form-control" value="Protected by bilateral non-disclosure covenants" placeholder="e.g. Protected by bilateral non-disclosure covenants">
+                                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                            </div>
+                            <div class="dynamic-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" name="enquiry_features[]" class="form-control" value="Verified RERA Advisory Mandate (DLRERA2023A00892)" placeholder="e.g. Verified RERA Advisory Mandate">
+                                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                            </div>
+                            <div class="dynamic-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" name="enquiry_features[]" class="form-control" value="Direct Senior Partner Access Only" placeholder="e.g. Direct Senior Partner Access Only">
+                                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                            </div>
+                        </div>
+                        <button type="button" id="add-enquiry-feature-btn" class="btn btn-outline btn-sm" style="margin-top: 0.5rem;">+ Add Trust Badge</button>
+                    </div>
+
+                    <h4 style="font-size: 0.95rem; color: var(--admin-gold); margin: 1.5rem 0 0.75rem;">B. Bottom Cinematic Call To Action</h4>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="cta_eyebrow">CTA Eyebrow</label>
+                            <input type="text" name="cta_eyebrow" id="cta_eyebrow" class="form-control" value="Elite Homez Advisory">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="cta_title">CTA Headline</label>
+                            <input type="text" name="cta_title" id="cta_title" class="form-control" value="The right property starts with the right advice.">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="cta_subtitle">CTA Subtitle</label>
+                        <textarea name="cta_subtitle" id="cta_subtitle" class="form-control" rows="2">Discover a more considered, confidential way to navigate premier Delhi NCR real estate.</textarea>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="cta_btn1_text">Button 1 Text</label>
+                            <input type="text" name="cta_btn1_text" id="cta_btn1_text" class="form-control" value="Explore Properties Catalogue">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="cta_btn1_url">Button 1 Target URL</label>
+                            <input type="text" name="cta_btn1_url" id="cta_btn1_url" class="form-control" value="/properties">
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="cta_btn2_text">Button 2 Text</label>
+                            <input type="text" name="cta_btn2_text" id="cta_btn2_text" class="form-control" value="Contact Advisory Desk">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="cta_btn2_url">Button 2 Target URL</label>
+                            <input type="text" name="cta_btn2_url" id="cta_btn2_url" class="form-control" value="/contact-us">
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="cta_image">Upload Background Image</label>
+                            <input type="file" name="cta_image" id="cta_image" class="form-control" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="cta_image_url">Or Direct Image URL</label>
+                            <input type="text" name="cta_image_url" id="cta_image_url" class="form-control" value="/assets/images/stitch/service-cta-dusk.jpg" placeholder="/assets/images/stitch/service-cta-dusk.jpg">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar: Publishing Settings -->
+        <div class="admin-form-side">
+            <div class="admin-card" style="margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.05rem; margin-bottom: 1.25rem; color: var(--admin-navy);">Visibility &amp; State</h3>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
+                        <input type="checkbox" name="is_published" value="1" checked style="width: 18px; height: 18px;">
+                        <div>
+                            <strong style="color: var(--admin-navy); font-size: 0.95rem;">Active (Published)</strong>
+                            <div style="font-size: 0.75rem; color: var(--admin-text-muted);">When unchecked, service returns 404 and is hidden from navigation.</div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
+                        <input type="checkbox" name="show_on_home" value="1" checked style="width: 18px; height: 18px;">
+                        <div>
+                            <strong style="color: var(--admin-navy); font-size: 0.95rem;">Show on Homepage</strong>
+                            <div style="font-size: 0.75rem; color: var(--admin-text-muted);">Displays this practice on the primary website homepage.</div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="sort_order">Display Sort Order</label>
+                    <input type="number" name="sort_order" id="sort_order" class="form-control" value="5">
+                    <small class="form-text">Lower numbers appear first (e.g. 1, 2, 3).</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="icon">Material / SVG Icon</label>
+                    <input type="text" name="icon" id="icon" class="form-control" value="compass" placeholder="compass, home, award, shield...">
+                </div>
+
+                <div style="padding-top: 1rem; border-top: 1px solid var(--admin-border);">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;">Save &amp; Publish Service</button>
+                    <a href="<?= $baseUrl ?>/admin/services" class="btn btn-outline" style="width: 100%; text-align: center;">Cancel</a>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <h3 style="font-size: 1.05rem; margin-bottom: 1.25rem; color: var(--admin-navy);">SEO &amp; Meta Tags</h3>
+
+                <div class="form-group">
+                    <label class="form-label" for="seo_title">SEO Meta Title</label>
+                    <input type="text" name="seo_title" id="seo_title" class="form-control" placeholder="Defaults to service name if blank">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="meta_description">Meta Description</label>
+                    <textarea name="meta_description" id="meta_description" class="form-control" rows="4" placeholder="Brief summary for search engine snippets..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab switching
+    document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.admin-tab-pane').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            const targetPane = document.getElementById(btn.dataset.tab);
+            if (targetPane) targetPane.classList.add('active');
+        });
+    });
+
+    // Remove row event delegation
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-row-btn')) {
+            const row = e.target.closest('.dynamic-row');
+            if (row) row.remove();
+        }
+    });
+
+    // 1. Add Hero Feature
+    const addHeroFeatureBtn = document.getElementById('add-hero-feature-btn');
+    if (addHeroFeatureBtn) {
+        addHeroFeatureBtn.addEventListener('click', function() {
+            const container = document.getElementById('hero-features-container');
+            const div = document.createElement('div');
+            div.className = 'dynamic-row';
+            div.style.cssText = 'display: flex; gap: 0.5rem; margin-bottom: 0.5rem;';
+            div.innerHTML = `
+                <input type="text" name="hero_features[]" class="form-control" placeholder="e.g. South Delhi Enclaves">
+                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 2. Add Stat
+    const addStatBtn = document.getElementById('add-stat-btn');
+    if (addStatBtn) {
+        addStatBtn.addEventListener('click', function() {
+            const container = document.getElementById('approach-stats-container');
+            const idx = container.querySelectorAll('.dynamic-row').length + Date.now();
+            const div = document.createElement('div');
+            div.className = 'dynamic-row';
+            div.style.cssText = 'display: grid; grid-template-columns: 140px 1fr 40px; gap: 0.5rem; margin-bottom: 0.5rem;';
+            div.innerHTML = `
+                <input type="text" name="approach_stats[${idx}][value]" class="form-control" placeholder="e.g. 100%">
+                <input type="text" name="approach_stats[${idx}][label]" class="form-control" placeholder="e.g. Buyer Aligned">
+                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 3. Add Deliverable
+    const addDelivBtn = document.getElementById('add-deliverable-btn');
+    if (addDelivBtn) {
+        addDelivBtn.addEventListener('click', function() {
+            const container = document.getElementById('deliverables-container');
+            const count = container.querySelectorAll('.dynamic-row').length + 1;
+            const idx = Date.now();
+            const numStr = String(count).padStart(2, '0');
+            const div = document.createElement('div');
+            div.className = 'dynamic-row';
+            div.style.cssText = 'background: #FAF8F4; padding: 1rem; border: 1px solid var(--admin-border); border-radius: 4px; margin-bottom: 0.75rem;';
+            div.innerHTML = `
+                <div style="display: grid; grid-template-columns: 80px 1fr 1fr 40px; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <input type="text" name="deliverables_items[${idx}][num]" class="form-control" value="${numStr}">
+                    <input type="text" name="deliverables_items[${idx}][title]" class="form-control" placeholder="Step Title">
+                    <input type="text" name="deliverables_items[${idx}][tag]" class="form-control" placeholder="Category / Tag">
+                    <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                </div>
+                <textarea name="deliverables_items[${idx}][desc]" class="form-control" rows="2" placeholder="Detailed step description..."></textarea>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 4. Add Roadmap Step
+    const addRoadmapBtn = document.getElementById('add-roadmap-btn');
+    if (addRoadmapBtn) {
+        addRoadmapBtn.addEventListener('click', function() {
+            const container = document.getElementById('roadmap-container');
+            const count = container.querySelectorAll('.dynamic-row').length + 1;
+            const idx = Date.now();
+            const numStr = String(count).padStart(2, '0');
+            const div = document.createElement('div');
+            div.className = 'dynamic-row';
+            div.style.cssText = 'background: #FAF8F4; padding: 1rem; border: 1px solid var(--admin-border); border-radius: 4px; margin-bottom: 0.75rem;';
+            div.innerHTML = `
+                <div style="display: grid; grid-template-columns: 80px 1fr 40px; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <input type="text" name="roadmap_steps[${idx}][step]" class="form-control" value="${numStr}">
+                    <input type="text" name="roadmap_steps[${idx}][title]" class="form-control" placeholder="Stage Name">
+                    <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                </div>
+                <textarea name="roadmap_steps[${idx}][desc]" class="form-control" rows="2" placeholder="Stage description..."></textarea>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 5. Add Why Pillar
+    const addWhyBtn = document.getElementById('add-why-pillar-btn');
+    if (addWhyBtn) {
+        addWhyBtn.addEventListener('click', function() {
+            const container = document.getElementById('why-pillars-container');
+            const count = container.querySelectorAll('.dynamic-row').length + 1;
+            const idx = Date.now();
+            const numStr = String(count).padStart(2, '0');
+            const div = document.createElement('div');
+            div.className = 'dynamic-row';
+            div.style.cssText = 'background: #FAF8F4; padding: 1rem; border: 1px solid var(--admin-border); border-radius: 4px; margin-bottom: 0.75rem;';
+            div.innerHTML = `
+                <div style="display: grid; grid-template-columns: 80px 140px 1fr 40px; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <input type="text" name="why_pillars[${idx}][num]" class="form-control" value="${numStr}">
+                    <input type="text" name="why_pillars[${idx}][icon]" class="form-control" value="verified_user" placeholder="Icon">
+                    <input type="text" name="why_pillars[${idx}][title]" class="form-control" placeholder="Pillar Title">
+                    <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                </div>
+                <textarea name="why_pillars[${idx}][desc]" class="form-control" rows="2" placeholder="Pillar description..."></textarea>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 6. Add Checkmark
+    const addCheckmarkBtn = document.getElementById('add-checkmark-btn');
+    if (addCheckmarkBtn) {
+        addCheckmarkBtn.addEventListener('click', function() {
+            const container = document.getElementById('checkmarks-container');
+            const div = document.createElement('div');
+            div.className = 'dynamic-row';
+            div.style.cssText = 'display: flex; gap: 0.5rem; margin-bottom: 0.5rem;';
+            div.innerHTML = `
+                <input type="text" name="value_prop_checkmarks[]" class="form-control" placeholder="Commitment bullet point">
+                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 7. Add Audience
+    const addAudienceBtn = document.getElementById('add-audience-btn');
+    if (addAudienceBtn) {
+        addAudienceBtn.addEventListener('click', function() {
+            const container = document.getElementById('audiences-container');
+            const idx = Date.now();
+            const div = document.createElement('div');
+            div.className = 'dynamic-row';
+            div.style.cssText = 'background: #FAF8F4; padding: 1rem; border: 1px solid var(--admin-border); border-radius: 4px; margin-bottom: 0.75rem;';
+            div.innerHTML = `
+                <div style="display: grid; grid-template-columns: 140px 1fr 40px; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <input type="text" name="audience_profiles[${idx}][icon]" class="form-control" value="home" placeholder="Icon">
+                    <input type="text" name="audience_profiles[${idx}][title]" class="form-control" placeholder="Audience Title">
+                    <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+                </div>
+                <textarea name="audience_profiles[${idx}][desc]" class="form-control" rows="2" placeholder="Audience description..."></textarea>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 8. Add FAQ
+    const addFaqBtn = document.getElementById('add-faq-btn');
+    if (addFaqBtn) {
+        addFaqBtn.addEventListener('click', function() {
+            const container = document.getElementById('faqs-container');
+            const count = container.querySelectorAll('.dynamic-row').length + 1;
+            const idx = Date.now();
+            const div = document.createElement('div');
+            div.className = 'dynamic-row';
+            div.style.cssText = 'background: #FAF8F4; padding: 1.25rem; border: 1px solid var(--admin-border); border-radius: 4px; margin-bottom: 1rem;';
+            div.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <strong style="color: var(--admin-navy); font-size: 0.9rem;">FAQ Item #<span class="faq-row-num">${count}</span></strong>
+                    <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">Remove FAQ &times;</button>
+                </div>
+                <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <label class="form-label" style="font-size: 0.8rem;">Question *</label>
+                    <input type="text" name="faqs_items[${idx}][question]" class="form-control" placeholder="e.g. What are your advisory fees and commercial terms?" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="font-size: 0.8rem;">Answer *</label>
+                    <textarea name="faqs_items[${idx}][answer]" class="form-control" rows="3" placeholder="Detailed response for clients..." required></textarea>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 9. Add Enquiry Feature
+    const addEnquiryFeatureBtn = document.getElementById('add-enquiry-feature-btn');
+    if (addEnquiryFeatureBtn) {
+        addEnquiryFeatureBtn.addEventListener('click', function() {
+            const container = document.getElementById('enquiry-features-container');
+            const div = document.createElement('div');
+            div.className = 'dynamic-row';
+            div.style.cssText = 'display: flex; gap: 0.5rem; margin-bottom: 0.5rem;';
+            div.innerHTML = `
+                <input type="text" name="enquiry_features[]" class="form-control" placeholder="e.g. Strict Bilateral Non-Disclosure">
+                <button type="button" class="btn btn-outline btn-sm remove-row-btn" style="color: #EF4444;">&times;</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+});
+</script>

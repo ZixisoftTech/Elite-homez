@@ -1,0 +1,29 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Core;
+
+class Response {
+    public function setStatusCode(int $code): self {
+        http_response_code($code);
+        return $this;
+    }
+
+    public function setHeader(string $name, string $value): self {
+        header("$name: $value");
+        return $this;
+    }
+
+    public function json(array $data, int $statusCode = 200): void {
+        $this->setStatusCode($statusCode);
+        $this->setHeader('Content-Type', 'application/json; charset=UTF-8');
+        echo json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    public function redirect(string $url, int $statusCode = 302): void {
+        $this->setStatusCode($statusCode);
+        $this->setHeader('Location', $url);
+        exit;
+    }
+}

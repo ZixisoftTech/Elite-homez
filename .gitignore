@@ -1,0 +1,23 @@
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE & Editor Files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Runtime Logs
+logs/*.log
+!logs/.gitkeep
+
+# Temporary & Swap Files
+*.tmp
+*.swp
+*~
